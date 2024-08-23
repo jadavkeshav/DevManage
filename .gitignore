@@ -1,0 +1,31 @@
+DevManage# .gitignore
+
+# Node modules in both client and server
+client/node_modules/
+server/node_modules/
+
+# Environment variables
+client/.env
+server/.env
+
+
+# Build output
+client/dist/
+server/dist/
+
+# Logs
+client/logs
+server/logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE specific files
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.temp

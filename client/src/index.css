@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.mydropdown{
+    z-index: 100 !important;
+}
