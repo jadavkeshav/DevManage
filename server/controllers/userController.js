@@ -1,5 +1,6 @@
 const asyncHandler = require('express-async-handler');
 const User = require('../models/userModel');
+const Project = require('../models/projectModel');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
@@ -174,11 +175,55 @@ const updatePassword = async (req, res) => {
     }
   };
 
+  const getUserProjects = async (req, res) => {
+    try {
+      const userId = req.user._id; // Extract user ID from request object
+      const userProjects = await Project.find({
+        selectedDevelopers: userId,
+      }).select('projectName projectDesc projectUrl'); // Select only relevant fields
+  
+      res.json({
+        projects: userProjects,
+      });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  };
+
+  
+  const getUserTotalEarnings = async (req, res) => {
+    try {
+      const user = await User.findById(req.user.id);
+
+      const projects = user.projects;
+  
+      let totalEarning = 0.0;
+      
+      for (let i = 0; i < projects.length; i++) {
+        const Pro = await Project.findById(projects[i]);
+        if(Pro){
+          const Price = parseFloat(Pro.price);
+          const share = parseInt(Pro.developerShares.get(user._id));
+          totalEarning+= (Price * share) / 100;
+        }else{
+          res.status(404).json({message: "Project Not found"})
+        }
+      }      
+      res.status(200).json({totalEarning: totalEarning});
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  };
+  
+  
+
 module.exports = {
   registerUser,
   loginUser,
   getUserProfile,
   updatePassword,
   updateProfile,
-  getAllUsers
+  getAllUsers,
+  getUserProjects,
+  getUserTotalEarnings,
 };
