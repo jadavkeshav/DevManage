@@ -35,17 +35,9 @@ const TeamPage = () => {
 						color='#6366F1'
 					/>
 					<StatCard name='New Users Today' icon={UserPlus} value={userStats.newUsersToday} color='#10B981' />
-					<StatCard
-						name='Active Users'
-						icon={UserCheck}
-						value={userStats.activeUsers.toLocaleString()}
-						color='#F59E0B'
-					/>
-					<StatCard name='Churn Rate' icon={UserX} value={userStats.churnRate} color='#EF4444' />
 				</motion.div>
 
 				<UsersTable />
-
 				{/* USER CHARTS */}
 				<div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8'>
 					<UserGrowthChart />
