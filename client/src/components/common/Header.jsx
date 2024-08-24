@@ -1,7 +1,11 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useContext } from 'react';
 import { User } from 'lucide-react'; // Import User icon from lucide-react
+import { logOutUser, lookInSession, removeFromSession } from '../../session/session';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { UserContext } from '../../App';
 
 const Header = ({ title }) => {
+	const { userAuth, loading, setUserAuth } = useContext(UserContext);
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const dropdownRef = useRef(null); // Create a ref for the dropdown
 
@@ -10,9 +14,10 @@ const Header = ({ title }) => {
 	};
 
 	const handleLogout = () => {
-		// Handle logout logic here
-		console.log("User logged out");
-		setIsDropdownOpen(false); // Close dropdown after logout
+		setIsDropdownOpen(false); 
+		logOutUser();
+		setUserAuth({ access_token: null })
+		window.location.reload();
 	};
 
 	// Handle clicks outside the dropdown
@@ -31,7 +36,7 @@ const Header = ({ title }) => {
 
 	return (
 		<header className='bg-gray-800 bg-opacity-50 backdrop-blur-md shadow-lg border-b border-gray-700 header-important'
-			style={{ zIndex: 999, position: 'relative' }}	
+			style={{ zIndex: 999, position: 'relative' }}
 		>
 			<div className='max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center'>
 				<h1 className='text-2xl font-semibold text-gray-100'>{title}</h1>

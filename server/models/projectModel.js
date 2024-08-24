@@ -34,6 +34,11 @@ const projectSchema = new mongoose.Schema({
         key: String,
         value: String,
     }],
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    }
 }, {
     timestamps: true,
 });

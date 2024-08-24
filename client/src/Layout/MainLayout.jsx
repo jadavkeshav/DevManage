@@ -1,6 +1,7 @@
+import { Outlet } from 'react-router-dom';
 import Sidebar from '../components/common/Sidebar';
 
-const MainLayout = ({ children }) => {
+const MainLayout = () => {
     return (
         <div className='flex h-screen bg-gray-900 text-gray-100 overflow-hidden'>
             {/* BG */}
@@ -10,7 +11,9 @@ const MainLayout = ({ children }) => {
             </div>
 
             <Sidebar />
-            <div className='flex-1  overflow-auto'>{children}</div>
+            <div className='flex-1  overflow-auto'>
+                <Outlet/>
+            </div>
         </div>
     );
 }
