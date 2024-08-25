@@ -1,4 +1,4 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Brush } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Brush, Legend } from "recharts";
 import { motion } from "framer-motion";
 import { useContext, useEffect, useState } from "react";
 import axios from "axios";
@@ -11,7 +11,7 @@ const SalesOverviewChart = () => {
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
-				const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/users/get-projects-by-month`, {
+				const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/users/get-projects-by-month-and-sales`, {
 					headers: {
 						Authorization: `Bearer ${userAuth.token}`
 					}
@@ -27,9 +27,9 @@ const SalesOverviewChart = () => {
 
 	// Ensure data includes a starting point (0,0) for proper chart display
 	const processedData = [
-		{ name: 'Jan', projects: 0 },
+		{ name: 'Jan', projects: 0, sales: 0 },
 		...data,
-		{ name: 'Dec', projects: 0 }
+		{ name: 'Dec', projects: 0, sales: 0 }
 	];
 
 	return (
@@ -39,7 +39,7 @@ const SalesOverviewChart = () => {
 			animate={{ opacity: 1, y: 0 }}
 			transition={{ delay: 0.2 }}
 		>
-			<h2 className='text-lg font-medium mb-4 text-gray-100'>Projects Overview</h2>
+			<h2 className='text-lg font-medium mb-4 text-gray-100'>Projects & Sales Overview</h2>
 			<div className='h-80'>
 				<ResponsiveContainer width={"100%"} height={"100%"}>
 					<LineChart 
@@ -54,7 +54,15 @@ const SalesOverviewChart = () => {
 							tickFormatter={(tick) => tick}
 						/>
 						<YAxis 
+							yAxisId="left"
 							stroke='#9ca3af' 
+							tick={{ fontSize: 12 }}
+							domain={[0, 'auto']} // Start from 0
+						/>
+						<YAxis
+							yAxisId="right"
+							orientation="right"
+							stroke='#9ca3af'
 							tick={{ fontSize: 12 }}
 							domain={[0, 'auto']} // Start from 0
 						/>
@@ -66,7 +74,9 @@ const SalesOverviewChart = () => {
 							}}
 							itemStyle={{ color: "#E5E7EB" }}
 						/>
+						<Legend verticalAlign="top" height={36}/>
 						<Line
+							yAxisId="left"
 							type='monotone'
 							dataKey='projects'
 							stroke='url(#gradientProjects)'
@@ -74,10 +84,23 @@ const SalesOverviewChart = () => {
 							dot={{ fill: "#6366F1", strokeWidth: 2, r: 6 }}
 							activeDot={{ r: 8, strokeWidth: 2 }}
 						/>
+						<Line
+							yAxisId="right"
+							type='monotone'
+							dataKey='sales'
+							stroke='url(#gradientSales)'
+							strokeWidth={3}
+							dot={{ fill: "#34D399", strokeWidth: 2, r: 6 }}
+							activeDot={{ r: 8, strokeWidth: 2 }}
+						/>
 						<defs>
 							<linearGradient id="gradientProjects" x1="0" y1="0" x2="0" y2="1">
 								<stop offset="5%" stopColor="#6366F1" stopOpacity={0.8} />
 								<stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
+							</linearGradient>
+							<linearGradient id="gradientSales" x1="0" y1="0" x2="0" y2="1">
+								<stop offset="5%" stopColor="#34D399" stopOpacity={0.8} />
+								<stop offset="95%" stopColor="#34D399" stopOpacity={0} />
 							</linearGradient>
 						</defs>
 						<Brush dataKey='name' height={30} stroke="#6366F1" />

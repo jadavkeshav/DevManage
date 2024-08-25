@@ -93,22 +93,46 @@ module.exports = {
 // @desc    Get user profile
 // @route   GET /api/users/profile
 // @access  Private
-const getUserProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user.id);
-
-  if (user) {
-    res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      userName: user.userName,
-      role: user.role,
-    });
-  } else {
-    return res.status(404).json({ message: 'User Not Found' });
+const getUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
-});
+};
+
+const updateProfile = async (req, res) => {
+  try {
+    const { name, phone, userName } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    user.name = name || user.name;
+    user.phone = phone || user.phone;
+    user.userName = userName || user.userName;
+    await user.save();
+    res.json(user);
+  } catch (error) {
+    console.error(error);
+    if (error.name === 'ValidationError') {
+      // Handle validation errors
+      const errors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ errors });
+    } else if (error.code && error.code === 11000) {
+      // Handle duplicate key errors
+      return res.status(400).json({ message: 'UserName already taken.' });
+    }
+
+    // Handle other errors
+    res.status(500).json({ message: 'An error occurred.', error: error.message });
+  }
+};
 
 
 const updatePassword = async (req, res) => {
@@ -142,28 +166,29 @@ const updatePassword = async (req, res) => {
   }
 };
 
-const updateProfile = async (req, res) => {
-  const { name, phone } = req.body;
-  const userId = req.user.id; // Assuming you're using JWT for authentication
+// const updateProfile = async (req, res) => {
+//   const { name, phone } = req.body;
+//   const userId = req.user.id; // Assuming you're using JWT for authentication
 
-  try {
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+//   try {
+//     const user = await User.findById(userId);
+//     if (!user) {
+//       return res.status(404).json({ message: 'User not found' });
+//     }
 
-    // Update user information
-    user.name = name || user.name;
-    user.phone = phone || user.phone;
+//     // Update user information
+//     user.name = name || user.name;
+//     user.phone = phone || user.phone;
 
-    await user.save();
+//     await user.save();
 
-    res.status(200).json({ message: 'Profile updated successfully', user });
-  } catch (error) {
-    console.error('Error in updateProfile:', error.message);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
+//     res.status(200).json({ message: 'Profile updated successfully', user });
+//   } catch (error) {
+//     console.error('Error in updateProfile:', error.message);
+//     res.status(500).json({ message: 'Server error' });
+//   }
+// };
+
 
 const getAllUsers = async (req, res) => {
   try {
@@ -177,8 +202,10 @@ const getAllUsers = async (req, res) => {
 
 const getAllDevelopers = async (req, res) => {
   try {
-    const users = await User.find().select('name'); // Exclude password field from response
-    res.status(200).json(users);
+    const users = await User.find().select('name email userName');
+    const count = users.length;
+
+    res.status(200).json({ count, users });
   } catch (error) {
     console.error('Error in getAllUsers:', error.message);
     res.status(500).json({ message: 'Server error' });
@@ -188,9 +215,27 @@ const getAllDevelopers = async (req, res) => {
 const getUserProjects = async (req, res) => {
   try {
     const userId = req.user._id; // Extract user ID from request object
+
+    // Find the projects where the user is a selected developer
     const userProjects = await Project.find({
       selectedDevelopers: userId,
-    }).select('projectName projectDesc projectUrl price createdAt'); // Select only relevant fields
+    }).select('projectName projectDesc projectUrl sales price createdAt developerShares'); // Include developerShares field
+
+    // Map the userProjects to include the user's share in each project
+    const projectsWithShares = userProjects.map((project) => {
+      const userShare = project.developerShares.get(userId.toString()) || 0; // Get user's share or default to 0
+      return {
+        _id: project._id,
+        projectName: project.projectName,
+        projectDesc: project.projectDesc,
+        projectUrl: project.projectUrl,
+        sales: project.sales,
+        price: project.price,
+        createdAt: project.createdAt,
+        userShare: userShare,
+        userEarnings: (project.sales * project.price * (userShare / 100)).toFixed(2), // Calculate user earnings based on share
+      };
+    });
 
     const projectCount = await Project.countDocuments({
       selectedDevelopers: userId,
@@ -198,12 +243,13 @@ const getUserProjects = async (req, res) => {
 
     res.json({
       count: projectCount,
-      projects: userProjects,
+      projects: projectsWithShares, // Send projects with user shares and earnings
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 
 const getUserTotalEarnings = async (req, res) => {
@@ -219,7 +265,8 @@ const getUserTotalEarnings = async (req, res) => {
       if (Pro) {
         const Price = parseFloat(Pro.price);
         const share = parseInt(Pro.developerShares.get(user._id));
-        totalEarning += (Price * share) / 100;
+
+        totalEarning += (Pro.sales * Price * share) / 100;
       } else {
         res.status(404).json({ message: "Project Not found" })
       }
@@ -237,39 +284,40 @@ const getTotalProjectsPrice = async (req, res) => {
     // Find projects where the user is enrolled
     const projects = await Project.find({ selectedDevelopers: userId });
 
-    // let totalSales = 0;
+    // Calculate the total revenue by summing up the product of sales and price for each project
+    const totalRevenue = projects.reduce((sum, project) => sum + (project.sales * project.price), 0);
 
-    // Calculate the total sales by summing up the prices of the projects
-    const totalSales = projects.reduce((sum, project) => sum + project.price, 0);
-
-    // Send the total sales as a response
-    res.status(200).json({totalSales});
+    // Send the total revenue as a response
+    res.status(200).json({ totalRevenue });
   } catch (error) {
-    console.error('Error calculating total sales:', error);
+    console.error('Error calculating total revenue:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-const getProjectsByMonth = async (req, res) => {
+
+const getProjectsByMonthAndSales = async (req, res) => {
   try {
     const userId = req.user._id; // Extract user ID from request object
 
     // Fetch all projects for the user
     const projects = await Project.find({ selectedDevelopers: userId })
-                                  .select('createdAt');
+      .select('createdAt sales price');
 
-    // Aggregate projects by month
+    // Aggregate projects by month and calculate sales
     const monthlyData = projects.reduce((acc, project) => {
       const month = new Date(project.createdAt).toLocaleString('default', { month: 'short' });
-      if (!acc[month]) acc[month] = 0;
-      acc[month]++;
+      if (!acc[month]) acc[month] = { projects: 0, sales: 0 };
+      acc[month].projects++;
+      acc[month].sales += project.sales * project.price;
       return acc;
     }, {});
 
     // Convert to array of objects for chart
     const formattedData = Object.keys(monthlyData).map(month => ({
       name: month,
-      projects: monthlyData[month]
+      projects: monthlyData[month].projects,
+      sales: monthlyData[month].sales
     }));
 
     // Ensure the data is sorted by month
@@ -295,6 +343,6 @@ module.exports = {
   getUserProjects,
   getUserTotalEarnings,
   getTotalProjectsPrice,
-  getProjectsByMonth,
+  getProjectsByMonthAndSales,
   getAllDevelopers,
 };

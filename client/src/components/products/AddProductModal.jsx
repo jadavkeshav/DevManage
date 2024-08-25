@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
-import { Modal, Box, Button, TextField, Typography, Select, MenuItem, IconButton, Grid, Divider, Tooltip } from '@mui/material';
+import { Modal, Box, Button, TextField, Typography, Select, MenuItem, IconButton, Grid, Divider } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { Trash2 } from 'lucide-react';
 import { Add } from '@mui/icons-material';
@@ -29,8 +29,9 @@ const AddProductModal = ({ open, onClose }) => {
                     Authorization: `Bearer ${userAuth.token}`
                 }
             });
-            setDevelopesList(response.data);
-            setAvailableDevelopers(response.data);
+            console.log("myres", response)
+            setDevelopesList(response.data.users);
+            setAvailableDevelopers(response.data.users);
         } catch (error) {
             toast.error(error.response.data.message);
         }
@@ -68,7 +69,6 @@ const AddProductModal = ({ open, onClose }) => {
             toast.error(error.response?.data?.message || 'An error occurred');
         }
     };
-
 
     const handleAddRequirement = () => {
         setRequirements([...requirements, '']);
@@ -291,7 +291,7 @@ const AddProductModal = ({ open, onClose }) => {
                                     InputLabelProps={{ sx: { color: 'white' } }}
                                 >
                                     <MenuItem value='' disabled>Select Developer</MenuItem>
-                                    {availableDevelopers.map(dev => (
+                                    {Array.isArray(availableDevelopers) && availableDevelopers.map(dev => (
                                         <MenuItem key={dev._id} value={dev._id}>{dev.name}</MenuItem>
                                     ))}
                                 </Select>

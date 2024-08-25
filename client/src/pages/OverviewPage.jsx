@@ -29,8 +29,8 @@ const OverviewPage = () => {
 				Authorization: `Bearer ${userAuth.token}`
 			}
 		}).then(({ data }) => {
-			setCDTotalSale(data.totalSales)
-			const formattedPrice = formatMoney(data.totalSales)
+			setCDTotalSale(data.totalRevenue)
+			const formattedPrice = formatMoney(data.totalRevenue)
 			setTotalSales(formattedPrice);
 		})
 			.catch(({ response }) => {
@@ -70,6 +70,7 @@ const OverviewPage = () => {
 		getTotalSales();
 		getTotalEarnings();
 		getTotalProjects();
+		
 	}, [userAuth])
 
 	// Create dynamic category data
@@ -100,8 +101,7 @@ const OverviewPage = () => {
 
 				<div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
 					<SalesOverviewChart />
-					{(CDtotalSale && CDtotalEarninga) && <CategoryDistributionChart categoryData={categoryData} />}
-
+					{<CategoryDistributionChart categoryData={categoryData} />}
 					{/* <SalesChannelChart /> */}
 				</div>
 			</main>

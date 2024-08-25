@@ -1,20 +1,44 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-
 import Header from "../components/common/Header";
 import StatCard from "../components/common/StatCard";
-import { CreditCard, DollarSign, ShoppingCart, TrendingUp } from "lucide-react";
+import { BadgeIndianRupee,  ShoppingCart, TrendingUp } from "lucide-react";
 import SalesOverviewChart from "../components/sales/SalesOverviewChart";
 import SalesByCategoryChart from "../components/sales/SalesByCategoryChart";
 import DailySalesTrend from "../components/sales/DailySalesTrend";
-
-const salesStats = {
-	totalRevenue: "$1,234,567",
-	averageOrderValue: "$78.90",
-	conversionRate: "3.45%",
-	salesGrowth: "12.3%",
-};
+import axios from "axios";
+import { useContext } from "react";
+import toast from "react-hot-toast";
+import { UserContext } from "../App";
+import { formatMoney } from "../util/priceFormat";
 
 const SalesPage = () => {
+	const { userAuth: { token } } = useContext(UserContext);
+
+	const [saleData, setSaleData] = useState({
+	});
+
+	useEffect(() => {
+		const fetchSalesData = async () => {
+			try {
+				const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/projects/sales/overview`, {
+					headers: {
+						Authorization: `Bearer ${token}`
+					}
+				});
+				if (response) {
+					setSaleData(response.data.salesData[0]);
+				}
+			} catch (error) {
+				toast.error("Failed to fetch sales data");
+			}
+		};
+
+		fetchSalesData();
+	}, [token]);
+
+	console.log("salesData", saleData)
+
 	return (
 		<div className='flex-1 overflow-auto relative z-10'>
 			<Header title='Sales Dashboard' />
@@ -27,20 +51,25 @@ const SalesPage = () => {
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ duration: 1 }}
 				>
-					<StatCard name='Total Revenue' icon={DollarSign} value={salesStats.totalRevenue} color='#6366F1' />
+					<StatCard
+						name='Total Revenue'
+						icon={BadgeIndianRupee}
+						value={formatMoney(saleData.totalRevenue)}
+						color='#6366F1'
+					/>
 					<StatCard
 						name='Avg. Order Value'
 						icon={ShoppingCart}
-						value={salesStats.averageOrderValue}
+						value={formatMoney(saleData.avgOrderValue)}
 						color='#10B981'
 					/>
 					<StatCard
-						name='Conversion Rate'
+						name='Sales'
 						icon={TrendingUp}
-						value={salesStats.conversionRate}
+						value={(saleData.totalSales)}
 						color='#F59E0B'
 					/>
-					<StatCard name='Sales Growth' icon={CreditCard} value={salesStats.salesGrowth} color='#EF4444' />
+					
 				</motion.div>
 
 				<SalesOverviewChart />
@@ -53,4 +82,5 @@ const SalesPage = () => {
 		</div>
 	);
 };
+
 export default SalesPage;

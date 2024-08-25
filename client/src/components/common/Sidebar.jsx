@@ -11,10 +11,10 @@ const SIDEBAR_ITEMS = [
 		href: "/",
 	},
 	{ name: "Products / Projects", icon: ShoppingBag, color: "#8B5CF6", href: "/products" },
-	{ name: "Team", icon: Users, color: "#EC4899", href: "/Team" },
+	{ name: "Developers", icon: Users, color: "#EC4899", href: "/developers" },
 	{ name: "Sales", icon: DollarSign, color: "#10B981", href: "/sales" },
-	{ name: "Users", icon: ShoppingCart, color: "#F59E0B", href: "/users" },
-	{ name: "Analytics", icon: TrendingUp, color: "#3B82F6", href: "/analytics" },
+	// { name: "Users", icon: ShoppingCart, color: "#F59E0B", href: "/users" },
+	// { name: "Analytics", icon: TrendingUp, color: "#3B82F6", href: "/analytics" },
 	{ name: "Settings", icon: Settings, color: "#6EE7B7", href: "/settings" },
 ];
 
@@ -24,7 +24,7 @@ const Sidebar = () => {
 	return (
 		<motion.div
 			className={`relative z-10 transition-all duration-300 ease-in-out flex-shrink-0 ${
-				isSidebarOpen ? "w-64" : "w-20"
+				isSidebarOpen ? "w-64" : "w-20" 
 			}`}
 			animate={{ width: isSidebarOpen ? 256 : 80 }}
 		>

@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema({
     userName: {
         type: String,
         required: true,
-        unique: true,
+        unique: [true, 'UserName already taken.'],
     },
     password: {
         type: String,

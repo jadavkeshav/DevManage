@@ -2,8 +2,9 @@ import { motion } from 'framer-motion';
 import { Edit, Search, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { formatMoney } from '../../util/priceFormat';
 
-const ProductsTable = ({ PRODUCT_DATA }) => {
+const ProductsTable = ({ PRODUCT_DATA , onDelete}) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredProducts, setFilteredProducts] = useState(PRODUCT_DATA);
     const navigate = useNavigate(); // Hook for navigation
@@ -63,10 +64,13 @@ const ProductsTable = ({ PRODUCT_DATA }) => {
                                 Price
                             </th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
-                                Stock
+                                Sales
                             </th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
-                                Sales
+                                Shares
+                            </th>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
+                                Your Earnings
                             </th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
                                 Actions
@@ -100,8 +104,9 @@ const ProductsTable = ({ PRODUCT_DATA }) => {
                                     <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-300'>
                                         ${product.price?.toFixed(2)}
                                     </td>
-                                    <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-300'>{product.stock}</td>
                                     <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-300'>{product.sales}</td>
+                                    <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-300'>{product.userShare}%</td>
+                                    <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-300'>{formatMoney(product.userEarnings)}</td>
                                     <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-300'>
                                         <button
                                             className='text-indigo-400 hover:text-indigo-300 mr-2'
@@ -109,7 +114,7 @@ const ProductsTable = ({ PRODUCT_DATA }) => {
                                         >
                                             <Edit size={18} />
                                         </button>
-                                        <button className='text-red-400 hover:text-red-300'>
+                                        <button className='text-red-400 hover:text-red-300' onClick={() => onDelete(product._id)} >
                                             <Trash2 size={18} />
                                         </button>
                                     </td>

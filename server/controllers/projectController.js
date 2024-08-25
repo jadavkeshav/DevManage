@@ -2,28 +2,29 @@ const Project = require('../models/projectModel');
 const User = require('../models/userModel');
 
 
+
 const getProjectDetails = async (req, res) => {
   const projectId = req.params.id;
 
   try {
-      // Validate if the project ID is valid
-      if (!projectId) {
-          return res.status(400).json({ message: 'Project ID is required' });
-      }
+    // Validate if the project ID is valid
+    if (!projectId) {
+      return res.status(400).json({ message: 'Project ID is required' });
+    }
 
-      // Fetch the project details from the database
-      const project = await Project.findById(projectId).populate('selectedDevelopers').exec();
-      
-      // Check if the project exists
-      if (!project) {
-          return res.status(404).json({ message: 'Project not found' });
-      }
+    // Fetch the project details from the database
+    const project = await Project.findById(projectId).populate('selectedDevelopers').exec();
 
-      // Send the project details in the response
-      res.status(200).json({ project });
+    // Check if the project exists
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    // Send the project details in the response
+    res.status(200).json({ project });
   } catch (error) {
-      console.error('Error in getProjectDetails:', error.message);
-      res.status(500).json({ message: 'Server error' });
+    console.error('Error in getProjectDetails:', error.message);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -116,11 +117,67 @@ const deleteProject = async (req, res) => {
   }
 };
 
+const updateProjectSales = async (req, res) => {
+  const { id } = req.params;
+  const { sales } = req.body;
+
+  try {
+    // Find the project by ID
+    const project = await Project.findById(id);
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    // Update the sales field
+    project.sales = sales;
+
+    // Save the updated project to the database
+    await project.save();
+
+    res.status(200).json({
+      message: 'Sales updated successfully',
+      project
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+const getSalesOverview = async (req, res) => {
+  try {
+      // Aggregate sales data
+      const salesData = await Project.aggregate([
+        {
+            $addFields: {
+                totalRevenuePerProject: { $multiply: ["$sales", "$price"] } // Calculate total revenue per project
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                totalRevenue: { $sum: "$totalRevenuePerProject" },
+                avgOrderValue: { $avg: "$price" },
+                totalSales: { $sum: "$sales" } // Adjust as necessary
+            }
+        }
+    ]);
+
+      res.json({
+          salesData
+      });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Server error' });
+  }
+};
 
 
 module.exports = {
   createProject,
   deleteProject,
-  getProjectDetails
+  getProjectDetails,
+  updateProjectSales,
+  getSalesOverview
 
 };
