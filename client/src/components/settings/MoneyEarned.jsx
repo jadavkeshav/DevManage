@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { Box, Typography, Card, CardContent } from '@mui/material';
 import axios from 'axios';
 import { UserContext } from '../../App';
 import { formatMoney } from '../../util/priceFormat';
-import SettingSection from '../../components/settings/SettingSection'; // Ensure this path is correct
-; // Ensure this path is correct
+import SettingSection from '../../components/settings/SettingSection'; // Ensure this path is correct // Ensure this path is correct
 import { DollarSign } from 'lucide-react'; // Use this icon or another suitable one
 
 const MoneyEarned = () => {
