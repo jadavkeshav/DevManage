@@ -1,6 +1,32 @@
 const Project = require('../models/projectModel');
 const User = require('../models/userModel');
 
+
+const getProjectDetails = async (req, res) => {
+  const projectId = req.params.id;
+
+  try {
+      // Validate if the project ID is valid
+      if (!projectId) {
+          return res.status(400).json({ message: 'Project ID is required' });
+      }
+
+      // Fetch the project details from the database
+      const project = await Project.findById(projectId).populate('selectedDevelopers').exec();
+      
+      // Check if the project exists
+      if (!project) {
+          return res.status(404).json({ message: 'Project not found' });
+      }
+
+      // Send the project details in the response
+      res.status(200).json({ project });
+  } catch (error) {
+      console.error('Error in getProjectDetails:', error.message);
+      res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // @desc    Create a new project
 // @route   POST /api/projects
 // @access  Private (user must be logged in)
@@ -90,8 +116,11 @@ const deleteProject = async (req, res) => {
   }
 };
 
+
+
 module.exports = {
   createProject,
   deleteProject,
+  getProjectDetails
 
 };

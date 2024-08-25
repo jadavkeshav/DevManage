@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import OverviewPage from "./pages/OverviewPage";
 import ProtectedRoute from "./Protected/protectedRoute";
 import SignIn from "./pages/signIn";
@@ -13,6 +13,7 @@ import AnalyticsPage from "./pages/AnalyticsPage";
 import SettingsPage from "./pages/SettingsPage";
 import TeamPage from "./pages/TeamPage";
 import ProjectPage from "./components/products/ProjectPage";
+import { Toaster } from 'react-hot-toast';
 
 export const UserContext = createContext({});
 
@@ -34,21 +35,21 @@ function App() {
 
 	return (
 		<UserContext.Provider value={{ userAuth, setUserAuth, loading }}>
-				<Routes>
-					<Route index path="/signin" element={<SignIn />} />
-
-					<Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>} >
-						<Route index element={<ProtectedRoute><OverviewPage /></ProtectedRoute>} />
-						<Route path='/products' element={<ProtectedRoute><ProductsPage /></ProtectedRoute>} />
-						<Route path='/projects/:projectId' element={<ProtectedRoute><ProjectPage /></ProtectedRoute>} />
-						<Route path='/users' element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
-						<Route path='/team' element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
-						<Route path='/sales' element={<ProtectedRoute><SalesPage /></ProtectedRoute>} />
-						<Route path='/orders' element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
-						<Route path='/analytics' element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
-						<Route path='/settings' element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-					</Route>
-				</Routes>
+			<Toaster position="top-center" reverseOrder={false} />
+			<Routes>
+				<Route index path="/signin" element={<SignIn />} />
+				<Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>} >
+					<Route index element={<ProtectedRoute><OverviewPage /></ProtectedRoute>} />
+					<Route path='/products' element={<ProtectedRoute><ProductsPage /></ProtectedRoute>} />
+					<Route path='/projects/:projectId' element={<ProtectedRoute><ProjectPage /></ProtectedRoute>} />
+					<Route path='/users' element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
+					<Route path='/team' element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
+					<Route path='/sales' element={<ProtectedRoute><SalesPage /></ProtectedRoute>} />
+					<Route path='/orders' element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
+					<Route path='/analytics' element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
+					<Route path='/settings' element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+				</Route>
+			</Routes>
 		</UserContext.Provider>
 	);
 }

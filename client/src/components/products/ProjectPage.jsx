@@ -1,260 +1,132 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Button, TextField, Typography, Box, IconButton, Grid } from '@mui/material';
-import { Save, Cancel, Add } from '@mui/icons-material';
+import React, { useEffect, useState } from 'react';
+import { Box, Typography, Grid, Card, CardContent, CardActions, Button, Chip } from '@mui/material';
+import axios from 'axios';
+import { format } from 'date-fns';
+import { useParams } from 'react-router-dom';
 
-const mockProjects = [
-    { id: 1, projectName: 'Gym Data', projectDesc: 'Data related to gym activities', projectUrl: 'www.gymdata.com', price: '18000', submissionDate: '2024-08-28', selectedDevelopers: ['Charlie Brown', 'Alice Johnson'], requirements: ['Gym Data', 'Login'], developerShares: { 'Charlie Brown': '40', 'Alice Johnson': '60' }, endPoints: [{ key: 'API1', value: '/api/v1/data' }, { key: 'API2', value: '/api/v1/login' }] },
-    // Add more mock projects here
-];
+const parseDate = (dateString) => {
+    const date = new Date(dateString);
+    return isNaN(date.getTime()) ? null : date;
+};
 
 const ProjectPage = () => {
     const { projectId } = useParams();
-    const navigate = useNavigate();
-    const [project, setProject] = useState(null);
-    const [newDeveloper, setNewDeveloper] = useState('');
-    const [newDeveloperShare, setNewDeveloperShare] = useState('');
-    const [newEndpoint, setNewEndpoint] = useState({ key: '', value: '' });
+    const [projectData, setProjectData] = useState(null);
+    const [developerNames, setDeveloperNames] = useState({});
 
     useEffect(() => {
-        // Fetch project data based on projectId
-        const fetchProject = () => {
-            // Replace with actual API call
-            const projectData = mockProjects.find(p => p.id === parseInt(projectId));
-            setProject(projectData);
+        const fetchProjectData = async () => {
+            try {
+                const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/projects/${projectId}`);
+                const data = response.data.project;
+                setProjectData(data);
+
+                // Create a mapping of developer IDs to names
+                const names = data.selectedDevelopers.reduce((acc, developer) => {
+                    acc[developer._id] = developer.name;
+                    return acc;
+                }, {});
+                setDeveloperNames(names);
+
+            } catch (error) {
+                console.error("Error fetching project data:", error);
+            }
         };
-        fetchProject();
+
+        fetchProjectData();
     }, [projectId]);
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setProject(prevProject => ({ ...prevProject, [name]: value }));
-    };
+    console.log(projectData)
 
-    const handleUpdate = () => {
-        // Update project logic here
-        console.log('Updated Project:', project);
-        // navigate('/products'); // Redirect to the project list or another page
-    };
-
-    const handleAddDeveloper = () => {
-        if (newDeveloper && !project.selectedDevelopers.includes(newDeveloper) && newDeveloperShare) {
-            setProject(prevProject => ({
-                ...prevProject,
-                selectedDevelopers: [...prevProject.selectedDevelopers, newDeveloper],
-                developerShares: { ...prevProject.developerShares, [newDeveloper]: newDeveloperShare },
-            }));
-            setNewDeveloper('');
-            setNewDeveloperShare('');
-        }
-    };
-
-    const handleRemoveDeveloper = (developer) => {
-        const updatedDevelopers = project.selectedDevelopers.filter(d => d !== developer);
-        const updatedShares = { ...project.developerShares };
-        delete updatedShares[developer];
-        setProject(prevProject => ({
-            ...prevProject,
-            selectedDevelopers: updatedDevelopers,
-            developerShares: updatedShares,
-        }));
-    };
-
-    const handleAddEndpoint = () => {
-        if (newEndpoint.key && newEndpoint.value) {
-            setProject(prevProject => ({
-                ...prevProject,
-                endPoints: [...prevProject.endPoints, newEndpoint],
-            }));
-            setNewEndpoint({ key: '', value: '' });
-        }
-    };
-
-    if (!project) return <p>Loading...</p>;
+    if (!projectData) return <Typography>Loading...</Typography>;
 
     return (
-        <motion.div
-            // style={{ backgroundColor: "#516381" }}
-            className='backdrop-blur-md shadow-lg rounded-xl p-6 border'
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-        >
-            <Typography variant='h4' component='h1' color='white' mb={4}>
-                Project Details
-            </Typography>
-            <Box component='form' onSubmit={(e) => { e.preventDefault(); handleUpdate(); }}>
-                <Grid container spacing={2}>
-                    {/* Standard Fields */}
-                    {['projectName', 'projectDesc', 'projectUrl', 'price', 'submissionDate', 'requirements'].map((field) => (
-                        <Grid item xs={12} md={6} key={field}>
-                            <Box mb={2}>
-                                <Box display='flex' alignItems='center'>
-                                    <TextField
-                                        fullWidth
-                                        label={field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                                        name={field}
-                                        value={project[field]}
-                                        onChange={handleChange}
-                                        margin='normal'
-                                        multiline={field === 'projectDesc'}
-                                        rows={field === 'projectDesc' ? 4 : undefined}
-                                        InputLabelProps={{ sx: { color: 'white' } }}
-                                        InputProps={{
-                                            sx: {
-                                                color: 'white',
-                                                '& .Mui-disabled': {
-                                                    color: 'white', // Ensure disabled text color is white
-                                                },
-                                            },
-                                        }}
-                                    />
-                                </Box>
-                            </Box>
-                        </Grid>
-                    ))}
+        <Box p={4} className="z-100">
+            <Typography variant="h4" gutterBottom>{projectData.projectName}</Typography>
+            <Typography variant="h6" color="textSecondary" gutterBottom>{projectData.projectDesc}</Typography>
 
-                    {/* Developer Shares */}
-                    <Grid item xs={12}>
-                        <Box mb={2}>
-                            <Typography variant='h6' color='white' mb={1}>Developer Shares</Typography>
-                            {project.selectedDevelopers.map(developer => (
-                                <Box key={developer} display='flex' alignItems='center' mb={1}>
-                                    <TextField
-                                        label={developer}
-                                        value={project.developerShares[developer]}
-                                        onChange={(e) => setProject(prevProject => ({
-                                            ...prevProject,
-                                            developerShares: {
-                                                ...prevProject.developerShares,
-                                                [developer]: e.target.value,
-                                            },
-                                        }))}
-                                        margin='normal'
-                                        InputLabelProps={{ sx: { color: 'white' } }}
-                                        InputProps={{ sx: { color: 'white' } }}
-                                    />
-                                    <IconButton
-                                        color='error'
-                                        onClick={() => handleRemoveDeveloper(developer)}
-                                    >
-                                        <Cancel />
-                                    </IconButton>
-                                </Box>
-                            ))}
-                            <Box display='flex' alignItems='center' mb={2}>
-                                <TextField
-                                    label='New Developer'
-                                    value={newDeveloper}
-                                    onChange={(e) => setNewDeveloper(e.target.value)}
-                                    margin='normal'
-                                    InputLabelProps={{ sx: { color: 'white' } }}
-                                    InputProps={{ sx: { color: 'white' } }}
-                                />
-                                <TextField
-                                    label='Share'
-                                    value={newDeveloperShare}
-                                    onChange={(e) => setNewDeveloperShare(e.target.value)}
-                                    margin='normal'
-                                    InputLabelProps={{ sx: { color: 'white' } }}
-                                    InputProps={{ sx: { color: 'white' } }}
-                                />
-                                <IconButton
-                                    color='primary'
-                                    onClick={handleAddDeveloper}
-                                >
-                                    <Add />
-                                </IconButton>
-                            </Box>
-                        </Box>
-                    </Grid>
-
-                    {/* End Points */}
-                    <Grid item xs={12}>
-                        <Box mb={2}>
-                            <Typography variant='h6' color='white' mb={1}>End Points</Typography>
-                            {project.endPoints.map((endpoint, index) => (
-                                <Grid container spacing={2} key={index} mb={1}>
-                                    <Grid item xs={6}>
-                                        <TextField
-                                            label={`Endpoint ${index + 1} Key`}
-                                            value={endpoint.key}
-                                            onChange={(e) => {
-                                                const newEndpoints = [...project.endPoints];
-                                                newEndpoints[index].key = e.target.value;
-                                                setProject(prevProject => ({ ...prevProject, endPoints: newEndpoints }));
-                                            }}
-                                            margin='normal'
-                                            InputLabelProps={{ sx: { color: 'white' } }}
-                                            InputProps={{ sx: { color: 'white' } }}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={6}>
-                                        <TextField
-                                            label={`Endpoint ${index + 1} Value`}
-                                            value={endpoint.value}
-                                            onChange={(e) => {
-                                                const newEndpoints = [...project.endPoints];
-                                                newEndpoints[index].value = e.target.value;
-                                                setProject(prevProject => ({ ...prevProject, endPoints: newEndpoints }));
-                                            }}
-                                            margin='normal'
-                                            InputLabelProps={{ sx: { color: 'white' } }}
-                                            InputProps={{ sx: { color: 'white' } }}
-                                        />
-                                    </Grid>
-                                </Grid>
-                            ))}
-                            <Box display='flex' alignItems='center' mb={2}>
-                                <TextField
-                                    label='New Endpoint Key'
-                                    value={newEndpoint.key}
-                                    onChange={(e) => setNewEndpoint(prev => ({ ...prev, key: e.target.value }))}
-                                    margin='normal'
-                                    InputLabelProps={{ sx: { color: 'white' } }}
-                                    InputProps={{ sx: { color: 'white' } }}
-                                />
-                                <TextField
-                                    label='New Endpoint Value'
-                                    value={newEndpoint.value}
-                                    onChange={(e) => setNewEndpoint(prev => ({ ...prev, value: e.target.value }))}
-                                    margin='normal'
-                                    InputLabelProps={{ sx: { color: 'white' } }}
-                                    InputProps={{ sx: { color: 'white' } }}
-                                />
-                                <IconButton
-                                    color='primary'
-                                    onClick={handleAddEndpoint}
-                                >
-                                    <Add />
-                                </IconButton>
-                            </Box>
-                        </Box>
-                    </Grid>
+            <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                    <Card>
+                        <CardContent>
+                            <Typography variant="h6">Project Details</Typography>
+                            <Typography variant="body1">URL: <a href={projectData.projectUrl} target="_blank" rel="noopener noreferrer">{projectData.projectUrl}</a></Typography>
+                            <Typography variant="body1">Price: ₹{projectData.price}</Typography>
+                            <Typography variant="body1" gutterBottom>
+                                <strong>Submission Date:</strong> {projectData.submissionDate ? format(parseDate(projectData.submissionDate), 'dd MMM yyyy') : 'Invalid date'}
+                            </Typography>
+                        </CardContent>
+                        <CardActions>
+                            <Button size="small" color="primary" href={projectData.projectUrl} target="_blank" rel="noopener noreferrer">Visit Project</Button>
+                        </CardActions>
+                    </Card>
                 </Grid>
 
-                <Box mt={2}>
-                    <Button
-                        type='submit'
-                        variant='contained'
-                        color='primary'
-                        startIcon={<Save />}
-                    >
-                        Submit Changes
-                    </Button>
-                    <Button
-                        variant='outlined'
-                        color='secondary'
-                        startIcon={<Cancel />}
-                        onClick={() => navigate('/projects')}
-                        sx={{ ml: 2 }}
-                    >
-                        Cancel
-                    </Button>
-                </Box>
-            </Box>
-        </motion.div>
+                <Grid item xs={12} md={6}>
+                    <Card>
+                        <CardContent>
+                            <Typography variant="h6">Selected Developers</Typography>
+                            {(projectData.selectedDevelopers || []).map(developer => (
+                                <Box key={developer._id} mb={2}>
+                                    <Typography variant="body1">{developer.name}</Typography>
+                                    <Typography variant="body2">Email: {developer.email}</Typography>
+                                    <Typography variant="body2">Phone: {developer.phone}</Typography>
+                                    {developer._id === projectData.createdBy && (
+                                        <Chip label="Admin" color="secondary" />
+                                    )}
+                                    {developer._id != projectData.createdBy && (
+                                        <Chip label="Developer" color="primary" />
+                                    )}
+                                </Box>
+                            ))}
+                        </CardContent>
+                    </Card>
+                </Grid>
+
+                <Grid item xs={12}>
+                    <Card>
+                        <CardContent>
+                            <Typography variant="h6">Requirements</Typography>
+                            <ul>
+                                {(projectData.requirements || []).map((requirement, index) => (
+                                    <li key={index}>
+                                        <Typography variant="body1">{requirement}</Typography>
+                                    </li>
+                                ))}
+                            </ul>
+                        </CardContent>
+                    </Card>
+                </Grid>
+
+                <Grid item xs={12}>
+                    <Card>
+                        <CardContent>
+                            <Typography variant="h6">Endpoints</Typography>
+                            {(projectData.endPoints || []).map(endpoint => (
+                                <Box key={endpoint._id} mb={2}>
+                                    <Typography variant="body1">{endpoint.key}: {endpoint.value}</Typography>
+                                </Box>
+                            ))}
+                        </CardContent>
+                    </Card>
+                </Grid>
+
+                <Grid item xs={12}>
+                    <Card>
+                        <CardContent>
+                            <Typography variant="h6">Developer Shares</Typography>
+                            <ul>
+                                {Object.entries(projectData.developerShares || {}).map(([developerId, share]) => (
+                                    <li key={developerId}>
+                                        <Typography variant="body1">Developer Name: {developerNames[developerId] || 'Unknown'} - Share: {share}%</Typography>
+                                    </li>
+                                ))}
+                            </ul>
+                        </CardContent>
+                    </Card>
+                </Grid>
+            </Grid>
+        </Box>
     );
 };
 

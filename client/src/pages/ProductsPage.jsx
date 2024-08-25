@@ -1,16 +1,39 @@
-import { useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import Header from '../components/common/Header';
 import StatCard from '../components/common/StatCard';
-import { AlertTriangle, CirclePlusIcon, DollarSign, Package, TrendingUp } from 'lucide-react'; // Import PlusCircle for the button
-import CategoryDistributionChart from '../components/overview/CategoryDistributionChart';
-import SalesTrendChart from '../components/products/SalesTrendChart';
+import { CirclePlusIcon, DollarSign, Package } from 'lucide-react'; // Import PlusCircle for the button
 import ProductsTable from '../components/products/ProductsTable';
 import AddProductModal from '../components/products/AddProductModal'; // Import the modal
 import { Button } from '@mui/material';
+import { UserContext } from '../App';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const ProductsPage = () => {
 	const [modalOpen, setModalOpen] = useState(false);
+	const [PRODUCT_DATA, SETPRODUCT_DATA] = useState([]);
+
+	const { userAuth } = useContext(UserContext);
+
+	const getAllProjects = async () => {
+		try {
+			const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/users/get-projects`, {
+				headers: {
+					Authorization: `Bearer ${userAuth.token}`
+				}
+			});
+			SETPRODUCT_DATA(response.data.projects);
+		} catch (error) {
+			toast.error(error.response.data.message);
+		}
+	};
+
+	useEffect(() => {
+		getAllProjects();
+	}, [userAuth]);
+
+	console.log(PRODUCT_DATA)
 
 	const handleOpenModal = () => setModalOpen(true);
 	const handleCloseModal = () => setModalOpen(false);
@@ -32,7 +55,7 @@ const ProductsPage = () => {
 						onClick={handleOpenModal}
 						sx={{ mb: 4 }}
 					>
-						<CirclePlusIcon className='mr-1 px-0.5'/>
+						<CirclePlusIcon className='mr-1 px-0.5' />
 						Add New Project/Product
 					</Button>
 				</motion.div>
@@ -48,13 +71,13 @@ const ProductsPage = () => {
 
 
 
-				<ProductsTable />
+				<ProductsTable PRODUCT_DATA={PRODUCT_DATA} />
 
 				{/* CHARTS */}
-				<div className='grid grid-col-1 lg:grid-cols-2 gap-8'>
+				{/* <div className='grid grid-col-1 lg:grid-cols-2 gap-8'>
 					<SalesTrendChart />
 					<CategoryDistributionChart />
-				</div>
+				</div> */}
 
 				{/* Add Product Modal */}
 				<AddProductModal open={modalOpen} onClose={handleCloseModal} />

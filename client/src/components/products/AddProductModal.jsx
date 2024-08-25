@@ -1,33 +1,74 @@
-import { useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { Modal, Box, Button, TextField, Typography, Select, MenuItem, IconButton, Grid, Divider, Tooltip } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { Trash2 } from 'lucide-react';
 import { Add } from '@mui/icons-material';
-
-const developersList = [
-    'Alice Johnson',
-    'Bob Smith',
-    'Charlie Brown',
-    'Diana Prince'
-];
+import { UserContext } from '../../App';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const AddProductModal = ({ open, onClose }) => {
+    let { userAuth } = useContext(UserContext);
+
+    const [developersList, setDevelopesList] = useState([]);
+    const [availableDevelopers, setAvailableDevelopers] = useState([]);
     const [projectName, setProjectName] = useState('');
     const [projectDesc, setProjectDesc] = useState('');
     const [projectUrl, setProjectUrl] = useState('');
     const [submissionDate, setSubmissionDate] = useState('');
-    const [availableDevelopers, setAvailableDevelopers] = useState(developersList);
     const [price, setPrice] = useState('');
     const [requirements, setRequirements] = useState(['']);
     const [selectedDevelopers, setSelectedDevelopers] = useState([]);
     const [developerShares, setDeveloperShares] = useState({});
     const [endPoints, setEndPoints] = useState([{ key: '', value: '' }]);
 
-    const handleSubmit = (event) => {
-        event.preventDefault();
-        console.log('Project Data:', { projectName, projectDesc, projectUrl, submissionDate, selectedDevelopers, price, requirements, developerShares, endPoints });
-        onClose(); // Close the modal after submission
+    const getAllDevelopers = async () => {
+        try {
+            const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/users/get-all-developers`, {
+                headers: {
+                    Authorization: `Bearer ${userAuth.token}`
+                }
+            });
+            setDevelopesList(response.data);
+            setAvailableDevelopers(response.data);
+        } catch (error) {
+            toast.error(error.response.data.message);
+        }
     };
+
+    useEffect(() => {
+        getAllDevelopers();
+    }, [userAuth]);
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+
+        const projectData = {
+            projectName,
+            projectDesc,
+            projectUrl,
+            price,
+            submissionDate,
+            selectedDevelopers,
+            requirements,
+            developerShares,
+            endPoints
+        };
+
+        try {
+            await axios.post(`${import.meta.env.VITE_BASE_URL}/projects/create`, projectData, {
+                headers: {
+                    Authorization: `Bearer ${userAuth.token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            toast.success('Project created successfully');
+            onClose();
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'An error occurred');
+        }
+    };
+
 
     const handleAddRequirement = () => {
         setRequirements([...requirements, '']);
@@ -45,22 +86,27 @@ const AddProductModal = ({ open, onClose }) => {
     };
 
     const handleAddDeveloper = (developer) => {
-        if (!selectedDevelopers.includes(developer)) {
+        if (!selectedDevelopers.some(dev => dev._id === developer._id)) {
             setSelectedDevelopers([...selectedDevelopers, developer]);
-            setAvailableDevelopers(availableDevelopers.filter(dev => dev !== developer));
-            setDeveloperShares({ ...developerShares, [developer]: 0 });
+            setAvailableDevelopers(availableDevelopers.filter(dev => dev._id !== developer._id));
+            setDeveloperShares({ ...developerShares, [developer._id]: 0 });
         }
     };
 
-    const handleRemoveDeveloper = (developer) => {
-        setSelectedDevelopers(selectedDevelopers.filter(dev => dev !== developer));
-        setAvailableDevelopers([...availableDevelopers, developer]);
-        const { [developer]: _, ...remainingShares } = developerShares;
-        setDeveloperShares(remainingShares);
+    const handleRemoveDeveloper = (developerId) => {
+        const developer = selectedDevelopers.find(dev => dev._id === developerId);
+        if (developer) {
+            setSelectedDevelopers(selectedDevelopers.filter(dev => dev._id !== developerId));
+            setAvailableDevelopers([...availableDevelopers, developer]);
+            setDeveloperShares(prevShares => {
+                const { [developerId]: _, ...remainingShares } = prevShares;
+                return remainingShares;
+            });
+        }
     };
 
-    const handleShareChange = (developer, value) => {
-        setDeveloperShares({ ...developerShares, [developer]: value });
+    const handleShareChange = (developerId, value) => {
+        setDeveloperShares({ ...developerShares, [developerId]: value });
     };
 
     const handleAddEndPoint = () => {
@@ -189,49 +235,56 @@ const AddProductModal = ({ open, onClose }) => {
                         </Grid>
                         <Grid item xs={12}>
                             <Typography variant='body1'>Project Developers</Typography>
-                            {selectedDevelopers.map(developer => (
-                                <Box
-                                    key={developer}
-                                    sx={{
-                                        bgcolor: 'grey.800',
-                                        color: 'text.primary',
-                                        borderRadius: 1,
-                                        py: 1,
-                                        px: 2,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 1,
-                                        mb: 1,
-                                    }}
-                                >
-                                    {developer}
-                                    <TextField
-                                        label='Share (%)'
-                                        variant='outlined'
-                                        type='number'
-                                        value={developerShares[developer]}
-                                        onChange={(e) => handleShareChange(developer, e.target.value)}
-                                        margin='normal'
-                                        sx={{ width: '80px', mx: 2 }}
-                                        InputLabelProps={{ sx: { color: 'white' } }}
-                                        InputProps={{ sx: { color: 'white' } }}
-                                    />
-                                    <Typography variant='body2'>
-                                        Earns: ₹{((price * developerShares[developer]) / 100).toFixed(2)}
-                                    </Typography>
-                                    <IconButton
-                                        onClick={() => handleRemoveDeveloper(developer)}
-                                        sx={{ color: 'error.main' }}
+                            {selectedDevelopers.length > 0 ? (
+                                selectedDevelopers.map(developer => (
+                                    <Box
+                                        key={developer._id}
+                                        sx={{
+                                            bgcolor: 'grey.800',
+                                            color: 'text.primary',
+                                            borderRadius: 1,
+                                            py: 1,
+                                            px: 2,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 1,
+                                            mb: 1,
+                                        }}
                                     >
-                                        <CloseIcon fontSize='small' />
-                                    </IconButton>
-                                </Box>
-                            ))}
+                                        {developer.name}
+                                        <TextField
+                                            label='Share (%)'
+                                            variant='outlined'
+                                            type='number'
+                                            value={developerShares[developer._id] || ''}
+                                            onChange={(e) => handleShareChange(developer._id, e.target.value)}
+                                            margin='normal'
+                                            sx={{ width: '80px', mx: 2 }}
+                                            InputLabelProps={{ sx: { color: 'white' } }}
+                                            InputProps={{ sx: { color: 'white' } }}
+                                        />
+                                        <Typography variant='body2'>
+                                            Earns: ₹{((price * (developerShares[developer._id] || 0)) / 100).toFixed(2)}
+                                        </Typography>
+                                        <IconButton
+                                            onClick={() => handleRemoveDeveloper(developer._id)}
+                                            sx={{ color: 'error.main' }}
+                                        >
+                                            <CloseIcon fontSize='small' />
+                                        </IconButton>
+                                    </Box>
+                                ))
+                            ) : (
+                                <Typography variant='body2'>No developers selected</Typography>
+                            )}
                             <Box display='flex' alignItems='center' mb={2}>
                                 <Select
                                     fullWidth
                                     value=''
-                                    onChange={(e) => handleAddDeveloper(e.target.value)}
+                                    onChange={(e) => {
+                                        const developer = developersList.find(dev => dev._id === e.target.value);
+                                        if (developer) handleAddDeveloper(developer);
+                                    }}
                                     displayEmpty
                                     inputProps={{ 'aria-label': 'Select Developer' }}
                                     sx={{ backgroundColor: 'gray.800', color: 'white' }}
@@ -239,7 +292,7 @@ const AddProductModal = ({ open, onClose }) => {
                                 >
                                     <MenuItem value='' disabled>Select Developer</MenuItem>
                                     {availableDevelopers.map(dev => (
-                                        <MenuItem key={dev} value={dev}>{dev}</MenuItem>
+                                        <MenuItem key={dev._id} value={dev._id}>{dev.name}</MenuItem>
                                     ))}
                                 </Select>
                             </Box>
@@ -247,13 +300,13 @@ const AddProductModal = ({ open, onClose }) => {
                         <Grid item xs={12}>
                             <Typography variant='body1'>Project Requirements</Typography>
                             {requirements.map((req, index) => (
-                                <Box key={index} display='flex' alignItems='center' gap={1} mb={1}>
+                                <Box key={index} display='flex' alignItems='center' mb={2}>
                                     <TextField
                                         fullWidth
-                                        label='Requirement'
                                         variant='outlined'
                                         value={req}
                                         onChange={(e) => handleRequirementChange(index, e.target.value)}
+                                        margin='normal'
                                         InputLabelProps={{ sx: { color: 'white' } }}
                                         InputProps={{ sx: { color: 'white' } }}
                                     />
@@ -265,34 +318,29 @@ const AddProductModal = ({ open, onClose }) => {
                                     </IconButton>
                                 </Box>
                             ))}
-                            <Button
-                                onClick={handleAddRequirement}
-                                variant='outlined'
-                                color='primary'
-                                sx={{ mb: 2, mt: 2 }}
-                            >
+                            <Button onClick={handleAddRequirement} startIcon={<Add />} variant='outlined' sx={{ color: 'white' }}>
                                 Add Requirement
                             </Button>
                         </Grid>
                         <Grid item xs={12}>
-                            <Typography variant='body1'>Project Endpoints</Typography>
+                            <Typography variant='body1'>End Points</Typography>
                             {endPoints.map((endPoint, index) => (
-                                <Box key={index} display='flex' alignItems='center' gap={1} mb={1}>
+                                <Box key={index} display='flex' alignItems='center' mb={2}>
                                     <TextField
-                                        fullWidth
-                                        label='Endpoint Name'
+                                        label='Key'
                                         variant='outlined'
                                         value={endPoint.key}
                                         onChange={(e) => handleEndPointChange(index, 'key', e.target.value)}
+                                        margin='normal'
                                         InputLabelProps={{ sx: { color: 'white' } }}
                                         InputProps={{ sx: { color: 'white' } }}
                                     />
                                     <TextField
-                                        fullWidth
-                                        label='Endpoint URL'
+                                        label='Value'
                                         variant='outlined'
                                         value={endPoint.value}
                                         onChange={(e) => handleEndPointChange(index, 'value', e.target.value)}
+                                        margin='normal'
                                         InputLabelProps={{ sx: { color: 'white' } }}
                                         InputProps={{ sx: { color: 'white' } }}
                                     />
@@ -304,35 +352,16 @@ const AddProductModal = ({ open, onClose }) => {
                                     </IconButton>
                                 </Box>
                             ))}
-                            <Tooltip title='Add Endpoint'>
-                                <IconButton
-                                    onClick={handleAddEndPoint}
-                                    sx={{
-                                        color: 'primary.main',
-                                        borderRadius: '50%',
-                                        bgcolor: 'background.default',
-                                        border: '1px solid',
-                                        borderColor: 'primary.main',
-                                        '&:hover': {
-                                            bgcolor: 'primary.main',
-                                            color: 'background.default',
-                                        },
-                                    }}
-                                >
-                                    <Add />
-                                </IconButton>
-                            </Tooltip>
+                            <Button onClick={handleAddEndPoint} startIcon={<Add />} variant='outlined' sx={{ color: 'white' }}>
+                                Add End Point
+                            </Button>
+                        </Grid>
+                        <Grid item xs={12}>
+                            <Button type='submit' variant='contained' color='primary'>
+                                Submit
+                            </Button>
                         </Grid>
                     </Grid>
-                    <Divider sx={{ my: 2 }} />
-                    <Button
-                        type='submit'
-                        variant='contained'
-                        color='primary'
-                        fullWidth
-                    >
-                        Add Project
-                    </Button>
                 </form>
             </Box>
         </Modal>

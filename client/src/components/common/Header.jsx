@@ -46,7 +46,7 @@ const Header = ({ title }) => {
 						className='flex items-center space-x-2 text-gray-100 focus:outline-none'
 					>
 						<User size={24} />
-						<span className='hidden sm:inline-block'>Username</span>
+						<span className='hidden sm:inline-block'>{userAuth.user.name}</span>
 					</button>
 					{isDropdownOpen && (
 						<div className='absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-50'>

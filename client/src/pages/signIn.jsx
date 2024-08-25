@@ -69,7 +69,7 @@ export default function SignIn() {
                 }
             })
             .catch(({ response }) => {
-                toast.error(response)
+                toast.error(response.data.message)
                 console.log(response)
             })
     };
