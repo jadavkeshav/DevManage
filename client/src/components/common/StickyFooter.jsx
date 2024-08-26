@@ -8,7 +8,7 @@ function Copyright() {
     return (
         <Typography variant="body2" color="white" align="center">
             {'Copyright © '}
-            <Link color="inherit" href="devmanage.vercel.app">
+            <Link color="inherit" href="https://devmanage.vercel.app">
                 DevManage
             </Link>{' '}
             {new Date().getFullYear()}
