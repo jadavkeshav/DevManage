@@ -4,21 +4,25 @@ const dotenv = require('dotenv');
 const connectDB = require('./config/db.js');
 const cors = require("cors");
 const nodemailer = require('nodemailer');
-// Load env variables
+const ejs = require('ejs');
+const path = require('path');
+
+
 const app = express();
+
+
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+
 
 dotenv.config();
 app.use(express.json());
 app.use(cors());
 
-// Connect to database
 connectDB();
 
 
 
-// Middleware
-
-// Routes
 app.use('/api/users', require('./routes/userRoutes.js'));
 app.use('/api/projects', require('./routes/projectRoutes.js'));
 
@@ -30,27 +34,32 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-const sendOtpEmail = (email, otp) => {
+const sendOtpEmail = async (email, otp) => {
+    const templatePath = path.join(__dirname, 'views', 'otp_email.ejs');
+    const html = await ejs.renderFile(templatePath, { otp });
+
     const mailOptions = {
         from: 'DevManage999@gmail.com',
         to: email,
         subject: 'Your OTP Code',
-        text: `Your OTP code is ${otp}. It is valid for 10 minutes.`,
+        html,
     };
 
     return transporter.sendMail(mailOptions);
 };
 
+
+
 const otpStore = {};
 
 const generateOtp = () => {
-    return crypto.randomInt(100000, 999999).toString(); // 6-digit OTP
+    return crypto.randomInt(100000, 999999).toString();
 };
 
 const saveOtp = (email, otp) => {
     otpStore[email] = {
         otp,
-        expiresAt: Date.now() + 10 * 60 * 1000, // OTP valid for 10 minutes
+        expiresAt: Date.now() + 10 * 60 * 1000,
     };
 };
 
@@ -58,11 +67,11 @@ const verifyOtp = (email, otp) => {
     const otpData = otpStore[email];
     if (!otpData) return false;
     if (Date.now() > otpData.expiresAt) {
-        delete otpStore[email]; // OTP expired, remove from store
+        delete otpStore[email];
         return false;
     }
     if (otpData.otp === otp) {
-        delete otpStore[email]; // OTP valid, remove after use
+        delete otpStore[email];
         return true;
     }
     return false;
@@ -96,7 +105,6 @@ app.post('/api/auth/verify-otp', (req, res) => {
     }
 
     if (verifyOtp(email, otp)) {
-        // OTP verified, proceed with registration or login
         res.status(200).json({ message: 'OTP verified successfully' });
     } else {
         res.status(400).json({ message: 'Invalid or expired OTP' });
@@ -109,3 +117,5 @@ app.post('/api/auth/verify-otp', (req, res) => {
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+  

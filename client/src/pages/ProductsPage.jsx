@@ -128,6 +128,7 @@ const ProductsPage = () => {
                     open={warningModalOpen}
                     onClose={closeWarningModal}
                     onConfirm={handleDeleteProject}
+                    message={"Do you really want to delete this project? This action cannot be undone."}
                 />
             </main>
         </div>

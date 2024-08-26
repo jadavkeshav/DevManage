@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../components/common/Sidebar';
+import StickyFooter from '../components/common/StickyFooter';
 
 const MainLayout = () => {
     return (
@@ -12,7 +13,8 @@ const MainLayout = () => {
 
             <Sidebar />
             <div className='flex-1  overflow-auto'>
-                <Outlet/>
+                <Outlet />
+                <StickyFooter />
             </div>
         </div>
     );

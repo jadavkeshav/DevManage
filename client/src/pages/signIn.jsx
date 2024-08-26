@@ -3,15 +3,12 @@ import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
 import TextField from '@mui/material/TextField';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
 import Link from '@mui/material/Link';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { UserContext } from '../App';
 import { useNavigate } from 'react-router-dom';
 import axios from "axios"
@@ -33,13 +30,12 @@ function Copyright(props) {
 
 // TODO remove, this demo shouldn't need to reset the theme.
 
-const defaultTheme = createTheme();
 
 export default function SignIn() {
 
+    const [loading, setLoading] = React.useState(false);
     let { userAuth, userAuth: { token }, setUserAuth } = React.useContext(UserContext);
 
-    console.log(token);
     const navigate = useNavigate();
 
     React.useEffect(() => {
@@ -51,12 +47,14 @@ export default function SignIn() {
     const handleSubmit = async (event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
-        console.log({
-            email: data.get('email'),
-            password: data.get('password'),
-        });
+        setLoading(true);
+        toast.loading("Logging in...");
+        // console.log({
+        //     email: data.get('email'),
+        //     password: data.get('password'),
+        // });
 
-        const respone = await axios.post(import.meta.env.VITE_BASE_URL + '/users/login', {
+        await axios.post(import.meta.env.VITE_BASE_URL + '/users/login', {
             email: data.get('email'),
             password: data.get('password'),
         })
@@ -64,18 +62,19 @@ export default function SignIn() {
                 storeIsSession("user", JSON.stringify(data))
                 setUserAuth(data)
                 if (data.token) {
+                    toast.dismiss();
                     toast.success("Login Successful")
                     navigate('/')
                 }
             })
             .catch(({ response }) => {
+                toast.dismiss();
                 toast.error(response.data.message)
-                console.log(response)
             })
     };
 
     return (
-        <ThemeProvider theme={defaultTheme}>
+        <>
             <Container component="main" maxWidth="xs">
                 <CssBaseline />
                 <Box
@@ -137,6 +136,6 @@ export default function SignIn() {
                 </Box>
                 <Copyright sx={{ mt: 8, mb: 4 }} />
             </Container>
-        </ThemeProvider>
+        </>
     );
 }

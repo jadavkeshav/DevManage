@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect, useContext } from 'react';
 import { User } from 'lucide-react'; // Import User icon from lucide-react
-import { logOutUser, lookInSession, removeFromSession } from '../../session/session';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { logOutUser } from '../../session/session';
 import { UserContext } from '../../App';
 
 const Header = ({ title }) => {
-	const { userAuth, loading, setUserAuth } = useContext(UserContext);
+	const { userAuth, setUserAuth } = useContext(UserContext);
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const dropdownRef = useRef(null); // Create a ref for the dropdown
 

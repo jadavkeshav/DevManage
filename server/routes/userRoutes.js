@@ -1,5 +1,5 @@
 const express = require('express');
-const { registerUser, loginUser, getUserProfile, getUserProjects, getUserTotalEarnings, getTotalProjectsPrice,  getAllDevelopers, getProjectsByMonthAndSales } = require('../controllers/userController');
+const { registerUser, loginUser, getUserProfile, getUserProjects, getUserTotalEarnings, getTotalProjectsPrice,  getAllDevelopers, getProjectsByMonthAndSales, deleteUser } = require('../controllers/userController');
 const { protect, adminOnly } = require('../middleware/authMiddleware');
 const { updatePassword } = require('../controllers/userController');
 const { updateProfile } = require('../controllers/userController');
@@ -27,5 +27,7 @@ router.get('/get-total-earnings', protect, getUserTotalEarnings);
 router.get('/total-sales/:userId', protect, getTotalProjectsPrice);
 
 router.get('/get-projects-by-month-and-sales', protect, getProjectsByMonthAndSales);
+
+router.delete('/:id', protect, adminOnly, deleteUser);
 
 module.exports = router;

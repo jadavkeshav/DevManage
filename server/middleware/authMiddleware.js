@@ -2,7 +2,6 @@ const jwt = require('jsonwebtoken');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/userModel');
 
-// Middleware to protect routes
 const protect = asyncHandler(async (req, res, next) => {
     let token;
 
@@ -25,7 +24,6 @@ const protect = asyncHandler(async (req, res, next) => {
     }
 });
 
-// Middleware to restrict access to admin only
 const adminOnly = (req, res, next) => {
     if (req.user && req.user.role === 'admin') {
         next();

@@ -3,22 +3,45 @@ const User = require('../models/userModel');
 const Project = require('../models/projectModel');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const nodemailer = require('nodemailer');
+const path = require("path")
+const ejs = require('ejs');
 
-// Generate JWT
+
+
 const generateToken = (id, role) => {
   return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };
 
-// @desc    Register a new user
-// @route   POST /api/users/register
+const transporter = nodemailer.createTransport({
+  service: "Gmail",
+  auth: {
+    user: process.env.EMAIL,
+    pass: process.env.EMAIL_PASSWORD
+  }
+});
+
+const sendThankYouEmail = async (email) => {
+  const templatePath = path.join(__dirname, "..",'views', 'thanks.ejs');
+  const html = await ejs.renderFile(templatePath);
+
+  const mailOptions = {
+    from: 'DevManage999@gmail.com',
+    to: email,
+    subject: 'Thank You for Joining Us!',
+    html,
+  };
+
+  return transporter.sendMail(mailOptions);
+};
+
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, phone, userName, password, role } = req.body;
 
   const userExists = await User.findOne({ email });
 
   if (userExists) {
-    res.status(400);
-    throw new Error('User already exists');
+    res.status(400).json({ message: 'User already exists' });
   }
 
   const salt = await bcrypt.genSalt(10);
@@ -34,6 +57,13 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 
   if (user) {
+    sendThankYouEmail(email)
+      .then(() => {
+        console.log("User registerd")
+      })
+      .catch((error) => {
+        console.error('Error sending ThankYou:', error);
+      });
     res.status(201).json({
       _id: user._id,
       name: user.name,
@@ -41,30 +71,26 @@ const registerUser = asyncHandler(async (req, res) => {
       token: generateToken(user._id, user.role),
     });
   } else {
-    res.status(400);
-    throw new Error('Invalid user data');
+    res.status(400).json({ message: 'Invalid user Data' });
+
   }
 });
 
-// @desc    Auth user & get token
-// @route   POST /api/users/login
+
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Check if user exists
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: 'Invalid email' });
     }
 
-    // Check if password matches
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid password' });
     }
 
-    // Create JWT token
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
@@ -90,9 +116,7 @@ module.exports = {
   loginUser,
 };
 
-// @desc    Get user profile
-// @route   GET /api/users/profile
-// @access  Private
+
 const getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -121,15 +145,12 @@ const updateProfile = async (req, res) => {
   } catch (error) {
     console.error(error);
     if (error.name === 'ValidationError') {
-      // Handle validation errors
       const errors = Object.values(error.errors).map(err => err.message);
       return res.status(400).json({ errors });
     } else if (error.code && error.code === 11000) {
-      // Handle duplicate key errors
       return res.status(400).json({ message: 'UserName already taken.' });
     }
 
-    // Handle other errors
     res.status(500).json({ message: 'An error occurred.', error: error.message });
   }
 };
@@ -137,7 +158,7 @@ const updateProfile = async (req, res) => {
 
 const updatePassword = async (req, res) => {
   const { currentPassword, newPassword } = req.body;
-  const userId = req.user.id; // Assuming you're using JWT for authentication
+  const userId = req.user.id;
 
   try {
     const user = await User.findById(userId);
@@ -145,17 +166,14 @@ const updatePassword = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Check if current password matches
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: 'Current password is incorrect' });
     }
 
-    // Hash the new password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-    // Update the password
     user.password = hashedPassword;
     await user.save();
 
@@ -166,33 +184,11 @@ const updatePassword = async (req, res) => {
   }
 };
 
-// const updateProfile = async (req, res) => {
-//   const { name, phone } = req.body;
-//   const userId = req.user.id; // Assuming you're using JWT for authentication
-
-//   try {
-//     const user = await User.findById(userId);
-//     if (!user) {
-//       return res.status(404).json({ message: 'User not found' });
-//     }
-
-//     // Update user information
-//     user.name = name || user.name;
-//     user.phone = phone || user.phone;
-
-//     await user.save();
-
-//     res.status(200).json({ message: 'Profile updated successfully', user });
-//   } catch (error) {
-//     console.error('Error in updateProfile:', error.message);
-//     res.status(500).json({ message: 'Server error' });
-//   }
-// };
 
 
 const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select('-password'); // Exclude password field from response
+    const users = await User.find().select('-password');
     res.status(200).json(users);
   } catch (error) {
     console.error('Error in getAllUsers:', error.message);
@@ -214,16 +210,12 @@ const getAllDevelopers = async (req, res) => {
 
 const getUserProjects = async (req, res) => {
   try {
-    const userId = req.user._id; // Extract user ID from request object
-
-    // Find the projects where the user is a selected developer
+    const userId = req.user._id;
     const userProjects = await Project.find({
       selectedDevelopers: userId,
-    }).select('projectName projectDesc projectUrl sales price createdAt developerShares'); // Include developerShares field
-
-    // Map the userProjects to include the user's share in each project
+    }).select('projectName projectDesc projectUrl sales price createdAt developerShares');
     const projectsWithShares = userProjects.map((project) => {
-      const userShare = project.developerShares.get(userId.toString()) || 0; // Get user's share or default to 0
+      const userShare = project.developerShares.get(userId.toString()) || 0;
       return {
         _id: project._id,
         projectName: project.projectName,
@@ -233,7 +225,7 @@ const getUserProjects = async (req, res) => {
         price: project.price,
         createdAt: project.createdAt,
         userShare: userShare,
-        userEarnings: (project.sales * project.price * (userShare / 100)).toFixed(2), // Calculate user earnings based on share
+        userEarnings: (project.sales * project.price * (userShare / 100)).toFixed(2),
       };
     });
 
@@ -243,7 +235,7 @@ const getUserProjects = async (req, res) => {
 
     res.json({
       count: projectCount,
-      projects: projectsWithShares, // Send projects with user shares and earnings
+      projects: projectsWithShares,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -281,13 +273,10 @@ const getTotalProjectsPrice = async (req, res) => {
   try {
     const userId = req.params.userId;
 
-    // Find projects where the user is enrolled
     const projects = await Project.find({ selectedDevelopers: userId });
 
-    // Calculate the total revenue by summing up the product of sales and price for each project
     const totalRevenue = projects.reduce((sum, project) => sum + (project.sales * project.price), 0);
 
-    // Send the total revenue as a response
     res.status(200).json({ totalRevenue });
   } catch (error) {
     console.error('Error calculating total revenue:', error);
@@ -298,13 +287,11 @@ const getTotalProjectsPrice = async (req, res) => {
 
 const getProjectsByMonthAndSales = async (req, res) => {
   try {
-    const userId = req.user._id; // Extract user ID from request object
+    const userId = req.user._id;
 
-    // Fetch all projects for the user
     const projects = await Project.find({ selectedDevelopers: userId })
       .select('createdAt sales price');
 
-    // Aggregate projects by month and calculate sales
     const monthlyData = projects.reduce((acc, project) => {
       const month = new Date(project.createdAt).toLocaleString('default', { month: 'short' });
       if (!acc[month]) acc[month] = { projects: 0, sales: 0 };
@@ -313,14 +300,11 @@ const getProjectsByMonthAndSales = async (req, res) => {
       return acc;
     }, {});
 
-    // Convert to array of objects for chart
     const formattedData = Object.keys(monthlyData).map(month => ({
       name: month,
       projects: monthlyData[month].projects,
       sales: monthlyData[month].sales
     }));
-
-    // Ensure the data is sorted by month
     const sortedData = formattedData.sort((a, b) => {
       const months = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
       return months[a.name] - months[b.name];
@@ -332,6 +316,22 @@ const getProjectsByMonthAndSales = async (req, res) => {
   }
 };
 
+const deleteUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    await Project.updateMany(
+      { selectedDevelopers: userId },
+      { $pull: { selectedDevelopers: userId } }
+    );
+
+    await User.findByIdAndDelete(userId);
+
+    res.status(200).json({ message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to delete user', error });
+  }
+};
 
 module.exports = {
   registerUser,
@@ -345,4 +345,5 @@ module.exports = {
   getTotalProjectsPrice,
   getProjectsByMonthAndSales,
   getAllDevelopers,
+  deleteUser,
 };

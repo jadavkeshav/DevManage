@@ -1,7 +1,6 @@
-import React from 'react';
 import { Modal, Box, Typography, Button } from '@mui/material';
 
-const WarningModal = ({ open, onClose, onConfirm }) => {
+const WarningModal = ({ open, onClose, onConfirm , message}) => {
     return (
         <Modal open={open} onClose={onClose} aria-labelledby="warning-modal" aria-describedby="warning-modal-description">
             <Box
@@ -22,7 +21,7 @@ const WarningModal = ({ open, onClose, onConfirm }) => {
                     Are you sure?
                 </Typography>
                 <Typography id="warning-modal-description" sx={{ mt: 2 }}>
-                    Do you really want to delete this project? This action cannot be undone.
+                   {message}
                 </Typography>
                 <Box sx={{ mt: 4, display: 'flex', justifyContent: 'space-around' }}>
                     <Button variant="contained" color="error" onClick={onConfirm}>

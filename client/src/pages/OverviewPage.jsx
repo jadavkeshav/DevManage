@@ -4,7 +4,6 @@ import Header from "../components/common/Header";
 import StatCard from "../components/common/StatCard";
 import SalesOverviewChart from "../components/overview/SalesOverviewChart";
 import CategoryDistributionChart from "../components/overview/CategoryDistributionChart";
-import SalesChannelChart from "../components/overview/SalesChannelChart";
 import { useContext, useEffect, useState } from "react";
 import axios from "axios";
 import { UserContext } from "../App";
@@ -24,7 +23,7 @@ const OverviewPage = () => {
 	let { userAuth, userAuth: { user } } = useContext(UserContext);
 
 	const getTotalSales = async () => {
-		const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/users/total-sales/${user.id}`, {
+		await axios.get(`${import.meta.env.VITE_BASE_URL}/users/total-sales/${user.id}`, {
 			headers: {
 				Authorization: `Bearer ${userAuth.token}`
 			}
@@ -39,7 +38,7 @@ const OverviewPage = () => {
 	}
 
 	const getTotalEarnings = async () => {
-		const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/users/get-total-earnings`, {
+		await axios.get(`${import.meta.env.VITE_BASE_URL}/users/get-total-earnings`, {
 			headers: {
 				Authorization: `Bearer ${userAuth.token}`
 			}
@@ -54,7 +53,7 @@ const OverviewPage = () => {
 	}
 
 	const getTotalProjects = async () => {
-		const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/users/get-projects`, {
+		await axios.get(`${import.meta.env.VITE_BASE_URL}/users/get-projects`, {
 			headers: {
 				Authorization: `Bearer ${userAuth.token}`
 			}
@@ -70,7 +69,7 @@ const OverviewPage = () => {
 		getTotalSales();
 		getTotalEarnings();
 		getTotalProjects();
-		
+
 	}, [userAuth])
 
 	// Create dynamic category data
@@ -79,6 +78,8 @@ const OverviewPage = () => {
 		{ name: "Total Sales", value: CDtotalSale },
 		{ name: "Total Earnings", value: CDtotalEarninga }
 	];
+
+
 
 	return (
 		<div className='flex-1 overflow-auto relative z-10'>
@@ -101,7 +102,7 @@ const OverviewPage = () => {
 
 				<div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
 					<SalesOverviewChart />
-					{<CategoryDistributionChart categoryData={categoryData} />}
+					{(CDtotalSale && CDtotalEarninga) && <CategoryDistributionChart categoryData={categoryData} />}
 					{/* <SalesChannelChart /> */}
 				</div>
 			</main>

@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
-import { Modal, Box, Button, TextField, Typography, Select, MenuItem, IconButton, Grid, Divider } from '@mui/material';
+import { Modal, Box, Button, TextField, Typography, Select, MenuItem, IconButton, Grid } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { Trash2 } from 'lucide-react';
 import { Add } from '@mui/icons-material';
@@ -22,6 +22,7 @@ const AddProductModal = ({ open, onClose }) => {
     const [developerShares, setDeveloperShares] = useState({});
     const [endPoints, setEndPoints] = useState([{ key: '', value: '' }]);
 
+
     const getAllDevelopers = async () => {
         try {
             const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/users/get-all-developers`, {
@@ -29,7 +30,6 @@ const AddProductModal = ({ open, onClose }) => {
                     Authorization: `Bearer ${userAuth.token}`
                 }
             });
-            console.log("myres", response)
             setDevelopesList(response.data.users);
             setAvailableDevelopers(response.data.users);
         } catch (error) {

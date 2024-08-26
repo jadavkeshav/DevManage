@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import {
     Box,
     Typography,
@@ -12,7 +12,8 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
-    TextField
+    TextField,
+    CircularProgress
 } from '@mui/material';
 import axios from 'axios';
 import { format } from 'date-fns';
@@ -70,6 +71,7 @@ const ProjectPage = () => {
                 setDeveloperNames(names);
 
             } catch (error) {
+                
                 console.error("Error fetching project data:", error);
             }
         };
@@ -77,7 +79,22 @@ const ProjectPage = () => {
         fetchProjectData();
     }, [projectId]);
 
-    if (!projectData) return <Typography>Loading...</Typography>;
+    if (!projectData) {
+        return (
+            <div
+                style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    height: '100%',
+                    width: '100%',
+                }}
+            >
+                <CircularProgress />
+            </div>
+        );
+    }
+
 
     const pieData = Object.entries(projectData.developerShares || {}).map(([developerId, share], index) => ({
         name: developerNames[developerId] || 'Unknown',
@@ -121,7 +138,6 @@ const ProjectPage = () => {
                 setError('Failed to submit data.');
             }
         } catch (err) {
-            console.error('Error submitting data:', err);
             setSuccess('');
             toast.error("Failed to submit data.", err)
             setError('An error occurred while submitting the data.');
@@ -130,8 +146,8 @@ const ProjectPage = () => {
 
     const handleUpdateSales = async () => {
         try {
-            const response = await axios.put(`${import.meta.env.VITE_BASE_URL}/projects/${projectId}/sales`, { sales },{
-                headers:{
+            const response = await axios.put(`${import.meta.env.VITE_BASE_URL}/projects/${projectId}/sales`, { sales }, {
+                headers: {
                     "Authorization": `Bearer ${token}`
                 }
             });
@@ -147,7 +163,6 @@ const ProjectPage = () => {
                 setError('Failed to update sales.');
             }
         } catch (err) {
-            console.error('Error updating sales:', err);
             setSuccess('');
             toast.error("Failed to update sales.");
             setError('An error occurred while updating sales.');
@@ -158,15 +173,15 @@ const ProjectPage = () => {
         if (projectData && projectData.projectUrl) {
             // Ensure projectUrl starts with 'http' or 'https'
             const url = new URL(projectData.projectUrl.startsWith('http') ? projectData.projectUrl : `http://${projectData.projectUrl}`);
-    
+
             // Open the URL in a new tab
             window.open(url.href, '_blank', 'noopener,noreferrer');
         } else {
-            console.error('No project URL found');
+            toast.error("No project URL found")
         }
     };
-    
-    
+
+
 
     return (
         <Box p={4} className="min-h-screen" style={{ backgroundColor }}>

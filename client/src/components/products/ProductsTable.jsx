@@ -10,7 +10,6 @@ const ProductsTable = ({ PRODUCT_DATA , onDelete}) => {
     const navigate = useNavigate(); // Hook for navigation
 
     useEffect(() => {
-        console.log('PRODUCT_DATA:', PRODUCT_DATA); // Debug: Check if data is passed correctly
         setFilteredProducts(PRODUCT_DATA);
     }, [PRODUCT_DATA]);
 

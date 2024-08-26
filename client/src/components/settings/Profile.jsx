@@ -4,6 +4,7 @@ import SettingSection from "./SettingSection";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { UserContext } from "../../App";
+import { CircularProgress } from "@mui/material";
 
 const Profile = () => {
 	const [user, setUser] = useState(null);
@@ -58,12 +59,26 @@ const Profile = () => {
 			setIsEditing(false);
 			toast.success('Profile updated successfully');
 		} catch (error) {
-			console.log(error)
+			// console.log(error)
 			toast.error(error.response.data.message);
 		}
 	};
 
-	if (!user) return <p>Loading...</p>;
+	if (!user) {
+		return (
+            <div
+                style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    height: '100%',
+                    width: '100%',
+                }}
+            >
+                <CircularProgress />
+            </div>
+        );
+	};
 
 	return (
 		<SettingSection icon={User} title={"Profile"}>

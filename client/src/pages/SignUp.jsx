@@ -9,12 +9,10 @@ import Box from '@mui/material/Box';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
-const defaultTheme = createTheme();
 
 
 export default function SignUp() {
@@ -23,6 +21,7 @@ export default function SignUp() {
 
     const [otpSent, setOtpSent] = useState(false);
     const [otp, setOtp] = useState('');
+    const [loading, setLoading] = useState(false);
     const [userData, setUserData] = useState({
         name: '',
         email: '',
@@ -40,56 +39,77 @@ export default function SignUp() {
     };
 
     const handleSendOtp = async () => {
+        setLoading(true);
+        toast.loading("Sending OTP...");
         try {
+
             const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/auth/send-otp`, {
                 email: userData.email
             });
             if (response.status === 200) {
                 setOtpSent(true);
+                toast.dismiss();
                 toast.success('OTP sent to your email');
             }
         } catch (error) {
-            console.error('Error sending OTP:', error);
+            // console.error('Error sending OTP:', error);
+            toast.dismiss();
             toast.error('Failed to send OTP');
+        } finally {
+            setLoading(false);
         }
     };
 
     const handleVerifyOtp = async () => {
+        setLoading(true);
+        toast.loading("Verifying OTP...");
         try {
             const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/auth/verify-otp`, {
                 email: userData.email,
                 otp
             });
             if (response.status === 200) {
+                toast.dismiss();
                 toast.success('OTP verified successfully');
                 await handleRegister(); // Proceed to register the user
             } else {
+                toast.dismiss();
                 toast.error('Invalid or expired OTP');
             }
         } catch (error) {
-            console.error('Error verifying OTP:', error);
+            toast.dismiss();
+            // console.error('Error verifying OTP:', error);
             toast.error('Failed to verify OTP');
+        } finally {
+            setLoading(false);
         }
     };
 
     const handleRegister = async () => {
+        setLoading(true);
+        toast.loading("Registering...");
         try {
             const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/users/register`, userData);
             if (response.status === 201) {
+                toast.dismiss();
                 toast.success('Registration successful');
                 navigate('/signin');
 
             } else {
+                toast.dismiss();
                 toast.error('Failed to register user');
             }
         } catch (error) {
-            console.error('Error registering user:', error);
+            toast.dismiss();
+            // console.error('Error registering user:', error);
             toast.error('Failed to register user');
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
-        <ThemeProvider theme={defaultTheme}>
+        <>
             <Container component="main" maxWidth="xs">
                 <CssBaseline />
                 <Box
@@ -212,6 +232,6 @@ export default function SignUp() {
                     </Box>
                 </Box>
             </Container>
-        </ThemeProvider>
+        </>
     );
 }

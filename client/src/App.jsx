@@ -7,8 +7,6 @@ import { lookInSession } from "./session/session"
 import MainLayout from "./Layout/MainLayout";
 import ProductsPage from "./pages/ProductsPage";
 import SalesPage from "./pages/SalesPage";
-import OrdersPage from "./pages/OrdersPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
 import SettingsPage from "./pages/SettingsPage";
 import ProjectPage from "./components/products/ProjectPage";
 import { Toaster } from 'react-hot-toast';
@@ -45,8 +43,6 @@ function App() {
 					<Route path='/projects/:projectId' element={<ProtectedRoute><ProjectPage /></ProtectedRoute>} />
 					<Route path='/developers' element={<ProtectedRoute><DevelopersPage /></ProtectedRoute>} />
 					<Route path='/sales' element={<ProtectedRoute><SalesPage /></ProtectedRoute>} />
-					{/* <Route path='/orders' element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} /> */}
-					{/* <Route path='/analytics' element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} /> */}
 					<Route path='/settings' element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
 				</Route>
 			</Routes>
