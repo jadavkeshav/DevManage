@@ -8,9 +8,7 @@
 - [Technologies](#technologies)
 - [Installation](#installation)
 - [Usage](#usage)
-- [API Endpoints](#api-endpoints)
 - [Contributing](#contributing)
-- [License](#license)
 
 ## Features
 
@@ -47,6 +45,7 @@
 
   - JWT (JSON Web Tokens) for secure user authentication and authorization.
   - Passwords are hashed and securely stored using bcrypt.
+  - Email verification
 - **User Roles**:
 
   - Differentiate access levels between `admin` and `developer`.
@@ -72,7 +71,7 @@
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/your-username/devmanage.git
+   git clone https://github.com/jadavkeshav/DevManage.git
    ```
 2. Navigate to the backend directory:
 
@@ -125,28 +124,6 @@
 2. You can log in with your credentials or register a new account if you're a new user.
 3. Explore features such as viewing and managing projects, checking total earnings, and editing your profile.
 
-## API Endpoints
-
-### User Endpoints
-
-- **GET /users/profile**
-
-  - Description: Retrieve user profile information.
-  - Headers: `Authorization: Bearer <token>`
-- **PUT /users/profile**
-
-  - Description: Update user profile details.
-  - Headers: `Authorization: Bearer <token>`
-  - Body: `{ name, phone, userName }`
-- **GET /users/get-projects**
-
-  - Description: Retrieve projects associated with the user.
-  - Headers: `Authorization: Bearer <token>`
-- **GET /users/get-total-earnings**
-
-  - Description: Retrieve the total earnings of the user.
-  - Headers: `Authorization: Bearer <token>`
-
 ## Contributing
 
 We welcome contributions to the DevManage project. If you'd like to contribute:
@@ -156,7 +133,3 @@ We welcome contributions to the DevManage project. If you'd like to contribute:
 3. Commit your changes (`git commit -am 'Add new feature'`).
 4. Push to the branch (`git push origin feature-branch`).
 5. Create a new Pull Request.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
